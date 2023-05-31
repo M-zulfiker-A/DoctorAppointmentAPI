@@ -1,6 +1,6 @@
 import express from "express"
 import { Doctor , TimeSlot , Patient , Appointment } from "./Schema.js"
-import { log } from "console"
+import { log, time } from "console"
 
 const router = express.Router()
 
@@ -129,6 +129,80 @@ router.post("/patients", async(req, res)=>{
     }
 })
 
+router.get("/appointments/pending", async(req, res, next)=>{
+    try{
+        let data = await Appointment.find({status : "scheduled"})
+        res.status(200).json(data)
+    }catch(Err){
+        res.status(400).json({
+            message : Err.message
+        })
+    }
+
+})
+
+router.get("/appointments/scheduled", async(req, res, next)=>{
+    try{
+        let data = await Appointment.find({status : "scheduled" , 
+        date : { $gte : Date.now() },
+        date : {$lte : Date.now() + 7*60*24*60*1000}
+    })
+        res.status(200).json(data)
+    }catch(Err){
+        res.status(400).json({
+            message : Err.message
+        })
+    }
+
+})
+
+router.post("/doctors/:doctorId/availabletimeslots", async(req, res)=>{
+    try {
+        let timeSlot = await TimeSlot.create({doctor : req.params.doctorId , ...req.body})
+        res.status(200).json({
+            message : "New Slot added",
+            doctor : timeSlot
+        })
+    } catch (error) {
+        res.status(400).json({
+            message : error.message
+        })
+    }
+})
+
+router.put("/doctors/:doctorId/availabletimeslots/:timeslotId", async(req, res)=>{
+    try {
+        let timeSlot = await TimeSlot.findByIdAndUpdate(req.params.timeslotId, req.body , {new : true})
+        res.status(200).json({
+            message : " Slot modified",
+            doctor : timeSlot
+        })
+    } catch (error) {
+        res.status(400).json({
+            message : error.message
+        })
+    }
+})
+
+router.get("/doctors/:doctorId/availabletimeslots", async(req, res)=>{
+    try{
+        let data = await TimeSlot.find({ doctor : req.params.doctorId})
+        console.log(data)
+        let result = data.reduce((resObj , curr)=>{
+            resObj.start = curr.start
+            resObj.end = curr.end
+            return resObj
+        }, {})
+        console.log(result)
+        res.status(200).json({
+            result
+        })
+    }catch(err){
+        res.status(400).json({
+            message : err.message
+        })
+    }
+})
 
 
 export default router

@@ -35,6 +35,9 @@ const doctorSchema = new mongoose.Schema({
       required: true
     }
   },
+  availableTimeSlots : {
+    type : [Date]
+  }
 });
 
 const patientSchema = new mongoose.Schema({
